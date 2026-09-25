@@ -1,0 +1,104 @@
+# =====================================================================
+# 公共配置。jar 默认激活 prod（生产环境）：
+#   生产：java -jar resume-backend.jar
+#   本地开发：SPRING_PROFILES_ACTIVE=default java -jar resume-backend.jar
+# =====================================================================
+server:
+  port: ${SERVER_PORT:8080}
+  servlet:
+    context-path: /
+
+spring:
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:prod}
+  application:
+    name: resume-backend
+  datasource:
+    driver-class-name: org.h2.Driver
+    url: jdbc:h2:file:${H2_DATA_DIR:./data/resume};MODE=MySQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH;NON_KEYWORDS=USER;INIT=RUNSCRIPT FROM 'classpath:schema.sql'\;RUNSCRIPT FROM 'classpath:data.sql'
+    username: ${H2_USER:sa}
+    password: ${H2_PASSWORD:}
+  h2:
+    console:
+      enabled: ${H2_CONSOLE_ENABLED:false}
+      path: /h2-console
+  servlet:
+    multipart:
+      # PDF 简历导入与图片上传共用限制
+      max-file-size: 10MB
+      max-request-size: 12MB
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: Asia/Shanghai
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      id-type: auto
+
+# springdoc-openapi 配置（Knife4j 底层依赖）
+springdoc:
+  swagger-ui:
+    # 原生 swagger-ui 路径，Knife4j 文档地址为 /doc.html
+    path: /swagger-ui.html
+    tags-sorter: alpha
+    operations-sorter: alpha
+  api-docs:
+    # OpenAPI JSON 地址：/v3/api-docs
+    path: /v3/api-docs
+  default-flat-param-object: true
+
+knife4j:
+  # 开启增强文档（ Knife4j UI 入口 /doc.html ）
+  enable: true
+  # 生产环境可通过环境变量 KNIFE4J_PRODUCTION=true 屏蔽文档资源
+  production: ${KNIFE4J_PRODUCTION:false}
+  setting:
+    language: zh_cn
+    enable-footer: false
+
+app:
+  jwt:
+    # 生产环境务必通过环境变量 JWT_SECRET 覆盖为独立随机密钥
+    secret: ${JWT_SECRET:change-me-in-production}
+    # 管理员登录 token 有效期（毫秒），默认 60 天
+    expire: ${JWT_EXPIRE:5184000000}
+    # 访客专属链接令牌有效期（毫秒），默认 60 天；过期后访客需重新通过链接打开
+    share-expire: ${SHARE_TOKEN_EXPIRE:5184000000}
+  upload:
+    # 本地上传目录；生产由 application-prod.yml 覆盖为服务器绝对路径
+    dir: ${UPLOAD_DIR:./uploads}
+    # 静态资源访问前缀
+    url-prefix: /uploads
+  # 初始管理员（仅在 user 表为空时初始化）
+  admin:
+    username: ${ADMIN_USERNAME:admin}
+    password: ${ADMIN_PASSWORD:admin123}
+  # 访客统计
+  visit:
+    # 会话去重窗口（分钟）：同一访客该窗口内多次打开/刷新只计一次访问
+    session-window-minutes: ${VISIT_SESSION_WINDOW_MINUTES:30}
+  # AI 大模型配置（OpenAI 兼容接口）。不配置则使用本地关键词问答
+  ai:
+    # 对话补全接口
+    api-url: ${AI_API_URL:}
+    api-key: ${AI_API_KEY:}
+    model: ${AI_MODEL:}
+    # PDF 导入专用模型
+    import-model: ${AI_IMPORT_MODEL:}
+    timeout: 30000
+    # 向量嵌入接口。embed-url 留空则跳过向量检索，直接用全量知识库
+    embed-url: ${AI_EMBED_URL:}
+    embed-model: ${AI_EMBED_MODEL:}
+    # 单次嵌入批量大小
+    embed-batch-size: 16
+    # 每次问答检索的最相关知识块数量
+    retrieve-top-k: 6
+
+logging:
+  level:
+    # 本地开发打印 SQL 与调试日志
+    com.example.resume: ${LOG_LEVEL:debug}

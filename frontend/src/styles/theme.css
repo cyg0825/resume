@@ -1,0 +1,305 @@
+/* =====================================================================
+   三套主题：通过 <html data-theme="default|dark|fresh"> 切换 CSS 变量
+   前台页面所有颜色均引用变量，实现一键换肤
+   ===================================================================== */
+
+/* ---------- 主题一：商务蓝（默认） ---------- */
+:root,
+[data-theme='default'] {
+  --color-primary: #2563eb;
+  --color-primary-light: #3b82f6;
+  --color-primary-dark: #1d4ed8;
+  --color-accent: #f59e0b;
+
+  --color-bg: #f5f7fb;
+  --color-bg-soft: #eef2ff;
+  --color-surface: #ffffff;
+  --color-surface-hover: #f8fafc;
+  --color-text: #1e293b;
+  --color-text-secondary: #64748b;
+  --color-text-inverse: #ffffff;
+  --color-border: #e2e8f0;
+
+  --hero-gradient: linear-gradient(135deg, #1e3a8a 0%, #2563eb 55%, #38bdf8 100%);
+  --shadow-card: 0 6px 24px rgba(37, 99, 235, 0.08);
+  --shadow-card-hover: 0 12px 32px rgba(37, 99, 235, 0.16);
+  --radius-card: 14px;
+  --tag-bg: #dbeafe;
+  --tag-text: #1d4ed8;
+}
+
+/* ---------- 主题二：暗夜科技 ---------- */
+[data-theme='dark'] {
+  --color-primary: #22d3ee;
+  --color-primary-light: #67e8f9;
+  --color-primary-dark: #0891b2;
+  --color-accent: #a78bfa;
+
+  --color-bg: #0b1120;
+  --color-bg-soft: #111c33;
+  --color-surface: #16213c;
+  --color-surface-hover: #1c2a4a;
+  --color-text: #e2e8f0;
+  --color-text-secondary: #94a3b8;
+  --color-text-inverse: #0b1120;
+  --color-border: #263555;
+
+  --hero-gradient: linear-gradient(135deg, #0f172a 0%, #0e7490 60%, #22d3ee 100%);
+  --shadow-card: 0 6px 24px rgba(0, 0, 0, 0.45);
+  --shadow-card-hover: 0 12px 36px rgba(34, 211, 238, 0.22);
+  --radius-card: 14px;
+  --tag-bg: rgba(34, 211, 238, 0.14);
+  --tag-text: #67e8f9;
+}
+
+/* ---------- 主题三：清新绿 ---------- */
+[data-theme='fresh'] {
+  --color-primary: #059669;
+  --color-primary-light: #10b981;
+  --color-primary-dark: #047857;
+  --color-accent: #f97316;
+
+  --color-bg: #f3faf6;
+  --color-bg-soft: #e7f7ee;
+  --color-surface: #ffffff;
+  --color-surface-hover: #f0fdf4;
+  --color-text: #1f2937;
+  --color-text-secondary: #6b7280;
+  --color-text-inverse: #ffffff;
+  --color-border: #d9efe2;
+
+  --hero-gradient: linear-gradient(135deg, #064e3b 0%, #059669 55%, #34d399 100%);
+  --shadow-card: 0 6px 24px rgba(5, 150, 105, 0.08);
+  --shadow-card-hover: 0 12px 32px rgba(5, 150, 105, 0.18);
+  --radius-card: 14px;
+  --tag-bg: #d1fae5;
+  --tag-text: #047857;
+}
+
+/* ===================== 全局基础样式 ===================== */
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  font-family: 'PingFang SC', 'Microsoft YaHei', -apple-system, BlinkMacSystemFont,
+    'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  background:
+    radial-gradient(1100px 540px at 6% -10%, color-mix(in srgb, var(--color-primary) 12%, transparent), transparent 60%),
+    radial-gradient(900px 480px at 104% 2%, color-mix(in srgb, var(--color-accent) 9%, transparent), transparent 55%),
+    radial-gradient(circle at 1px 1px, color-mix(in srgb, var(--color-text) 6%, transparent) 1px, transparent 0),
+    var(--color-bg);
+  background-size: auto, auto, 26px 26px, auto;
+  background-attachment: fixed;
+  color: var(--color-text);
+  transition: background-color 0.35s ease, color 0.35s ease;
+}
+
+/* 全局滚动条 */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--color-text-secondary) 35%, transparent);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--color-primary) 55%, transparent);
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* 滚动入场动画（v-reveal 指令驱动） */
+.reveal {
+  opacity: 0;
+  transform: translateY(26px);
+  transition:
+    opacity 0.65s cubic-bezier(0.22, 0.61, 0.36, 1),
+    transform 0.65s cubic-bezier(0.22, 0.61, 0.36, 1);
+  will-change: opacity, transform;
+}
+
+.reveal.reveal-in {
+  opacity: 1;
+  transform: none;
+}
+
+/* PDF 导出 / 减弱动效偏好时，强制完整显示 */
+.pdf-exporting .reveal,
+.reveal.reveal-in {
+  opacity: 1;
+  transform: none;
+}
+
+/* PDF 导出按固定 1080px 宽渲染，隐藏克隆文档滚动条，避免右侧截入黑边 */
+.pdf-exporting body {
+  overflow: hidden !important;
+}
+
+/* PDF 导出：只保留头像图片，作品封面等其他图片一律不导出；
+   第二条选择器特异性需高于第一条（含 id + 两个类），确保头像重新显示 */
+.pdf-exporting #resume-content img {
+  display: none;
+}
+
+.pdf-exporting #resume-content .hero img.avatar-img {
+  display: block;
+}
+
+/* “联系我”为网页引流区，作品集为网页交互区，均不进 PDF；
+   配合导出态各板块紧凑排版，尽量把所有内容压进一页 */
+.pdf-exporting #contact,
+.pdf-exporting #portfolio {
+  display: none !important;
+}
+
+/* PDF 导出紧凑排版：卡片/标题/标签全面收紧，目标一页容纳全部内容 */
+.pdf-exporting .section-block {
+  padding: 12px 14px;
+  border-radius: 10px;
+  margin-bottom: 8px;
+}
+
+.pdf-exporting .section-title {
+  margin-bottom: 9px;
+  font-size: 15px;
+  gap: 7px;
+}
+
+.pdf-exporting .section-title .el-icon {
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  font-size: 13px;
+}
+
+.pdf-exporting .section-title::before {
+  width: 4px;
+  height: 15px;
+}
+
+.pdf-exporting .tech-tag {
+  margin: 2px 5px 2px 0;
+  padding: 2px 8px;
+  font-size: 11.5px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  .hero-glow,
+  .avatar-wrap::after,
+  .avatar-ring {
+    animation: none !important;
+  }
+}
+
+a {
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+.section-block {
+  position: relative;
+  max-width: 1080px;
+  margin: 0 auto 18px;
+  padding: 20px 22px;
+  background: color-mix(in srgb, var(--color-surface) 96%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 7%, var(--color-border));
+  border-radius: 14px;
+  box-shadow: var(--shadow-card);
+  backdrop-filter: blur(8px);
+  transition:
+    background-color 0.35s ease,
+    box-shadow 0.3s ease,
+    border-color 0.3s ease;
+}
+
+.section-block:hover {
+  box-shadow: var(--shadow-card-hover);
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 0 0 14px;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--color-text);
+}
+
+/* 标题前的渐变色条 */
+.section-title::before {
+  content: '';
+  display: inline-block;
+  width: 5px;
+  height: 18px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, var(--color-primary-light), var(--color-primary-dark));
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--color-primary) 35%, transparent);
+}
+
+/* 标题图标做成渐变徽章 */
+.section-title .el-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 16px;
+  background: linear-gradient(135deg, var(--color-primary-dark), var(--color-primary-light));
+  box-shadow: 0 5px 14px color-mix(in srgb, var(--color-primary) 34%, transparent);
+}
+
+.text-secondary {
+  color: var(--color-text-secondary);
+}
+
+.tech-tag {
+  display: inline-block;
+  margin: 3px 6px 3px 0;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  background: var(--tag-bg);
+  color: var(--tag-text);
+}
+
+/* 让 Element Plus 主色跟随主题（关键按钮/链接） */
+.el-button--primary {
+  --el-button-bg-color: var(--color-primary);
+  --el-button-border-color: var(--color-primary);
+  --el-button-hover-bg-color: var(--color-primary-light);
+  --el-button-hover-border-color: var(--color-primary-light);
+  --el-button-active-bg-color: var(--color-primary-dark);
+  --el-button-active-border-color: var(--color-primary-dark);
+}
+
+@media (max-width: 768px) {
+  .section-block {
+    padding: 16px 14px;
+    margin-left: 12px;
+    margin-right: 12px;
+  }
+}

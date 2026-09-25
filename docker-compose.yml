@@ -1,0 +1,40 @@
+services:
+  backend:
+    build:
+      context: ./backend
+    container_name: resume-backend
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      H2_DATA_DIR: /app/data/resume
+      H2_USER: ${H2_USER:-sa}
+      H2_PASSWORD: ${H2_PASSWORD:-}
+      JWT_SECRET: ${JWT_SECRET:-change-me-in-production}
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin123}
+      AI_API_URL: ${AI_API_URL:-}
+      AI_API_KEY: ${AI_API_KEY:-}
+      AI_MODEL: ${AI_MODEL:-}
+      AI_EMBED_URL: ${AI_EMBED_URL:-}
+      AI_EMBED_MODEL: ${AI_EMBED_MODEL:-}
+      KNIFE4J_PRODUCTION: ${KNIFE4J_PRODUCTION:-false}
+      UPLOAD_DIR: /app/uploads
+    ports:
+      - "${BACKEND_PORT:-8080}:8080"
+    volumes:
+      - uploads-data:/app/uploads
+      - h2-data:/app/data
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: resume-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "${WEB_PORT:-80}:80"
+
+volumes:
+  uploads-data:
+  h2-data:

@@ -1,0 +1,42 @@
+# ---- Java / Maven ----
+backend/target/
+*.class
+*.jar
+!**/maven-wrapper.jar
+
+# ---- 前端 ----
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+# 根目录部署包
+/dist.zip
+/resume-backend.jar
+/uploads.tar.gz
+/resume_data.sql
+
+# ---- 环境变量（防止提交真实 API Key / 密码） ----
+.env
+.env.local
+.env.*.local
+
+# ---- H2 本地数据库 ----
+backend/data/
+
+# ---- 上传文件与本地配置 ----
+backend/uploads/
+uploads/
+*.log
+
+# ---- IDE / 系统 ----
+.idea/
+.vscode/
+*.iml
+.DS_Store
+.codeartsdoer/
+
+# ---- Docker 本地数据 ----
+docker-data/
