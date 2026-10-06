@@ -2,6 +2,7 @@ package com.example.resume.entity;
 
 import com.example.resume.common.AssetUrl;
 
+import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.FieldStrategy;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
@@ -64,5 +65,6 @@ public class Profile {
     @TableField(updateStrategy = FieldStrategy.IGNORED)
     private String about;
 
+    @TableField(fill = FieldFill.INSERT_UPDATE)
     private LocalDateTime updateTime;
 }

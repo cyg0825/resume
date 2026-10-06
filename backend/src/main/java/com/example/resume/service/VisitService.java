@@ -61,6 +61,8 @@ public class VisitService {
                 new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<VisitLog>()
                         .ge(VisitLog::getVisitTime, todayStart)));
         data.put("todayUniqueVisitors", visitLogMapper.countDistinctIpSince(todayStart));
+        // 会话窗口透出给后台，指标卡文案才不会把默认值写死
+        data.put("sessionWindowMinutes", sessionWindowMinutes);
         return data;
     }
 

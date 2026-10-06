@@ -1,5 +1,6 @@
 package com.example.resume.entity;
 
+import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.FieldStrategy;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
@@ -31,5 +32,6 @@ public class SiteConfig {
     /** AI 问答开关：1 开启，0 关闭 */
     private Integer aiEnabled;
 
+    @TableField(fill = FieldFill.INSERT_UPDATE)
     private LocalDateTime updateTime;
 }

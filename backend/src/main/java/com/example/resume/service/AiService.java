@@ -228,7 +228,7 @@ public class AiService {
         List<Portfolio> portfolios = ownerName != null
                 ? portfolioMapper.selectList(new LambdaQueryWrapper<Portfolio>()
                         .eq(Portfolio::getOwnerName, ownerName)
-                        .orderByAsc(Portfolio::getSort).orderByDesc(Portfolio::getId))
+                        .orderByAsc(Portfolio::getSort).orderByAsc(Portfolio::getId))
                 : Collections.emptyList();
         if (!portfolios.isEmpty()) {
             sb.append("【作品集】\n");
@@ -582,7 +582,7 @@ public class AiService {
 
         // 4. 荣誉证书
         if (containsAny(ql, "荣誉", "证书", "获奖", "奖项", "奖学金", "竞赛", "比赛",
-                "奖状", "颁奖", "名次", "等次", "几等", "蓝桥", "三杯", "志愿者", "拿过什么奖")) {
+                "奖状", "颁奖", "名次", "等次", "几等", "志愿者", "拿过什么奖")) {
             String section = extractSection(knowledgeBase, "【荣誉证书】");
             return section.isBlank() ? "暂未维护荣誉证书信息。" : section;
         }
@@ -613,7 +613,7 @@ public class AiService {
 
         // 8. 教育背景
         if (containsAny(ql, "教育", "毕业", "学校", "学历", "专业", "大学", "学院",
-                "本科", "课程", "上学", "读书", "新乡工程")) {
+                "本科", "课程", "上学", "读书")) {
             return extractSection(knowledgeBase, "【教育经历】");
         }
 
@@ -666,13 +666,13 @@ public class AiService {
     private String greetingAnswer(String name, Profile profile) {
         String title = profile != null ? nullToEmpty(profile.getJobTitle()) : "";
         return "你好！我是 " + name + " 的简历助手"
-                + (title.isBlank() ? "" : "，她的求职意向是「" + title + "」") + "。\n"
-                + "关于她的教育背景、实习与项目经历、技能特长、荣誉证书、联系方式都可以直接问我，例如：\n"
+                + (title.isBlank() ? "" : "，求职意向是「" + title + "」") + "。\n"
+                + "关于教育背景、实习与项目经历、技能特长、荣誉证书、联系方式都可以直接问，例如：\n"
                 + "- 实习期间主要做什么？\n"
-                + "- 会用哪些测试工具？\n"
+                + "- 掌握哪些技能？\n"
                 + "- 做过哪些项目？\n"
                 + "- 获得过哪些奖项？\n"
-                + "- 什么时候毕业？怎么联系她？";
+                + "- 什么时候毕业？怎么联系？";
     }
 
     /** 最终兜底：简历速览，确保任何问题都返回实质内容 */
@@ -705,7 +705,7 @@ public class AiService {
         if (!honors.isBlank()) {
             sb.append('\n').append(honors).append('\n');
         }
-        sb.append("\n你可以换个问法试试，比如：实习期间负责什么？用过哪些测试工具？获得过什么奖项？怎么联系她？");
+        sb.append("\n你可以换个问法试试，比如：实习期间负责什么？掌握哪些技能？获得过什么奖项？怎么联系？");
         return sb.toString();
     }
 

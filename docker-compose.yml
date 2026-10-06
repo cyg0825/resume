@@ -9,7 +9,7 @@ services:
       H2_DATA_DIR: /app/data/resume
       H2_USER: ${H2_USER:-sa}
       H2_PASSWORD: ${H2_PASSWORD:-}
-      JWT_SECRET: ${JWT_SECRET:-change-me-in-production}
+      JWT_SECRET: ${JWT_SECRET:-dev-only-insecure-secret-please-change-me}
       ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin123}
       AI_API_URL: ${AI_API_URL:-}
@@ -17,7 +17,7 @@ services:
       AI_MODEL: ${AI_MODEL:-}
       AI_EMBED_URL: ${AI_EMBED_URL:-}
       AI_EMBED_MODEL: ${AI_EMBED_MODEL:-}
-      KNIFE4J_PRODUCTION: ${KNIFE4J_PRODUCTION:-false}
+      KNIFE4J_PRODUCTION: ${KNIFE4J_PRODUCTION:-true}
       UPLOAD_DIR: /app/uploads
     ports:
       - "${BACKEND_PORT:-8080}:8080"

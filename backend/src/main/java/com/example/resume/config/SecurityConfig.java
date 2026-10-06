@@ -51,6 +51,9 @@ public class SecurityConfig {
                                 "/favicon.ico",
                                 "/error",
                                 "/webjars/**",
+                                // springdoc 默认入口是 /swagger-ui.html（重定向到 /swagger-ui/index.html），
+                                // 两条都要放行，否则 /swagger-ui/** 匹配不到带后缀的入口
+                                "/swagger-ui.html",
                                 "/swagger-ui/**",
                                 "/swagger-resources/**",
                                 "/v3/api-docs/**"

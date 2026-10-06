@@ -228,7 +228,7 @@ const navLinks = computed(() => {
 async function handleExport() {
   exporting.value = true
   try {
-    await exportResumePdf(document.getElementById('resume-content'), '个人简历')
+    await exportResumePdf(document.getElementById('resume-content'))
     ElMessage.success('PDF 导出成功')
   } catch (e) {
     console.error(e)
@@ -306,7 +306,7 @@ async function loadConfigAndReport() {
   }
 
   // 上报一次访问：同一浏览器会话（标签页生命周期）只上报一次，
-  // 避免刷新/HMR/前端路由跳转把 PV 刷高；服务端另有 30 分钟会话窗口去重兜底
+  // 避免刷新/HMR/前端路由跳转把 PV 刷高；服务端另有会话窗口去重兜底（默认 30 分钟，可配）
   try {
     if (!sessionStorage.getItem('resume-visit-reported')) {
       await reportVisit({ path: window.location.pathname, sessionId: getSessionId() })

@@ -20,7 +20,7 @@
 
 ### 基础功能
 - 前台单页简历：首页（头像/姓名/职位/slogan/社交链接）、关于我、教育经历、工作/项目经历（时间线）、技能熟练度进度条、作品集卡片、联系方式与留言
-- 简历 PDF 导出（html2canvas + jsPDF，A4 自动分页）
+- 简历 PDF 导出（html2canvas-pro + jsPDF，A4 自动分页）
 - 后台 JWT 登录鉴权，基本信息、教育、经历、技能、作品集的增删改查
 - 图片上传（头像、作品封面），本地存储并按日期分目录
 - 留言查看与删除
@@ -35,7 +35,7 @@
 
 ## 二、技术栈
 
-- 前端：Vue 3 + Vite 5 + Element Plus + Pinia + Vue Router 4 + Axios + ECharts + html2canvas + jsPDF
+- 前端：Vue 3 + Vite 5 + Element Plus + Pinia + Vue Router 4 + Axios + ECharts + html2canvas-pro + jsPDF
 - 后端：Spring Boot 3.2 + Spring Security + JJWT 0.12 + MyBatis-Plus 3.5 + H2 Database + Lombok
 - 数据库：H2 2.2（文件模式，MySQL 兼容语法，数据持久化在磁盘）
 - 部署：Docker Compose（后端 JRE 镜像 + 前端 Nginx 镜像，零外部数据库依赖）
@@ -56,7 +56,7 @@ Resume
 │   │   ├── service/             # 业务层（含 AI、统计、版本等）
 │   │   └── util/                # IP 工具
 │   ├── src/main/resources/
-│   │   ├── schema.sql           # H2 建表脚本（首次启动自动执行）
+│   │   ├── schema.sql           # H2 建表脚本（每次启动执行，开头含 DROP TABLE）
 │   │   ├── data.sql             # 初始数据（简历示例、管理员账号等）
 │   │   ├── application.yml      # 公共配置
 │   │   └── application-prod.yml  # 生产覆盖配置
@@ -86,10 +86,10 @@ Resume
 docker compose up -d --build
 ```
 
-- **H2 内嵌数据库首次启动自动建表 + 灌初始数据**（零外部依赖，无需手动准备数据库）
+- **H2 内嵌数据库自动建表 + 灌初始数据**（零外部依赖，无需手动准备数据库）；注意每次启动都会重跑脚本并重建表，见「九、数据库说明」
 - 前端地址：http://localhost （WEB_PORT 可改）
 - 后端地址：http://localhost:8080
-- 默认管理员：**admin / admin123**（登录后请尽快修改）
+- 初始管理员：账号口令由 `ADMIN_USERNAME`/`ADMIN_PASSWORD` 指定，未设置时取 `application.yml` 里的本地默认值；首次登录后请立即改密
 
 可用环境变量覆盖默认配置（见 `docker-compose.yml`）：
 `H2_USER`、`H2_PASSWORD`、`WEB_PORT`、`BACKEND_PORT`、`ADMIN_USERNAME`、`ADMIN_PASSWORD`、
@@ -107,9 +107,9 @@ mvn spring-boot:run
 ```
 
 后端运行在 http://localhost:8080。首次启动自动：
-- H2 以文件模式在 `./data/resume.mv.db` 创建数据库（仅首次，后续启动不重复跑脚本）
+- H2 以文件模式在 `./data/resume.mv.db` 落盘；JDBC URL 的 `INIT=RUNSCRIPT` 每次启动都会重跑 `schema.sql`/`data.sql`，而 `schema.sql` 开头是 `DROP TABLE IF EXISTS`，因此运行期数据（管理员、版本、专属链接、访问记录）在重启时会被重置
 - 执行 `schema.sql` 建表、`data.sql` 灌入初始简历数据
-- 创建管理员账号（默认 admin/admin123，可用 `ADMIN_USERNAME`/`ADMIN_PASSWORD` 覆盖）
+- 创建管理员账号（`ADMIN_USERNAME`/`ADMIN_PASSWORD`，未设置时取本地默认值）
 - 兜底创建默认简历版本与站点配置
 
 > 需要清空数据重来？停掉后端 → 删除 `backend/data/` 目录 → 再启动。
@@ -127,7 +127,7 @@ npm run dev
 ## 五、功能使用说明
 
 1. 打开前台首页，右下角依次为 **AI 问答入口**与**主题切换按钮**，右上角可导出 PDF、进入后台。
-2. 使用 admin/admin123 登录后台：
+2. 用初始管理员账号登录后台（见「方式 A」的说明）：
    - **数据概览**：查看访问量、独立 IP、趋势图、来源分布。
    - **基本信息 / 教育 / 工作项目 / 技能 / 作品集**：各页面顶部先选择要编辑的**简历版本**，再进行增删改；头像与封面通过上传接口保存到后端。
    - **简历版本**：创建新版本时可选择从现有版本克隆全部内容；「设为默认」即一键切换前台展示版本；「预览」打开 `/?versionId=ID` 查看该版本。
@@ -152,7 +152,7 @@ app:
 
 项目已集成 **Knife4j 4.5.0**（底层 springdoc-openapi 3，适配 Spring Boot 3 / Jakarta），全部接口均带中文 `@Tag/@Operation/@Parameter/@Schema` 注解，并按职责分为 **「01-前台公开接口」「02-后台管理接口(JWT)」** 两个分组。
 
-**访问地址**（后端启动后）：
+**访问地址**（后端启动后）。jar 零参数启动即 `prod` profile，`knife4j.production` 默认为 `true`，文档资源是关闭的；本地想看文档，设 `KNIFE4J_PRODUCTION=false` 或 `SPRING_PROFILES_ACTIVE=default`：
 
 | 入口 | 地址 |
 |------|------|
@@ -163,38 +163,47 @@ app:
 
 **调试需要 JWT 的后台接口**：
 
-1. 在「01-前台公开接口」分组调用 `POST /api/auth/login`（admin/admin123），从响应复制 `data.token`；
+1. 在「01-前台公开接口」分组调用 `POST /api/auth/login`（用初始管理员账号），从响应复制 `data.token`；
 2. 点击文档页右上角 **Authorize** 按钮，在 `Bearer-JWT` 输入框中粘贴 token（直接粘贴 token 即可，系统自动拼接 `Bearer ` 前缀）；
 3. 之后所有 `/api/admin/**` 接口都会自动携带 `Authorization` 头，可直接在线调试。
 
-**生产环境关闭文档**：设置环境变量 `KNIFE4J_PRODUCTION=true`（或改 `application.yml` 中 `knife4j.production`）即可屏蔽文档资源；`/doc.html`、`/webjars/**`、`/v3/api-docs/**` 等路径已在 Spring Security 中白名单放行，不影响业务接口鉴权。
+**生产环境关闭文档**：设置环境变量 `KNIFE4J_PRODUCTION=true`（或改 `application.yml` 中 `knife4j.production`）即可屏蔽文档资源；`/doc.html`、`/swagger-ui.html`、`/webjars/**`、`/v3/api-docs/**` 等路径已在 Spring Security 中白名单放行，不影响业务接口鉴权。
 
 ## 七、RESTful 接口一览
 
 统一响应格式：`{ "code": 200, "msg": "success", "data": ... }`
 
-**公开接口（无需登录）**
+**公开接口（无需凭证）**
 
 | 方法 | 路径 | 说明 |
 |------|------|------|
 | POST | /api/auth/login | 登录获取 JWT |
 | POST | /api/auth/logout | 退出 |
+| GET | /api/share/access?token= | 凭专属链接换取访客令牌（IP 限流） |
+| GET | /uploads/** | 上传的图片（文件名是随机串） |
+
+**简历内容接口（需 `Authorization: Bearer <token>`，管理员令牌或专属链接换得的访客令牌均可）**
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
 | GET | /api/profile?versionId= | 个人信息 |
 | GET | /api/educations?versionId= | 教育经历 |
 | GET | /api/experiences?versionId=&type= | 工作(1)/项目(2)经历 |
 | GET | /api/skills?versionId= | 技能 |
 | GET | /api/portfolios?versionId= | 作品集 |
-| GET | /api/versions | 简历版本列表 |
+| GET | /api/honors | 荣誉证书（按归属人） |
 | GET | /api/config | 站点配置（默认主题、开关） |
-| POST | /api/messages | 提交留言 |
 | POST | /api/visit | 访问上报 |
 | POST | /api/ai/chat | AI 提问 |
+
+其余未列出的路径一律 `denyAll`，简历版本列表在管理接口分组（`/api/admin/versions`）。
 
 **管理接口（/api/admin/**，均需 `Authorization: Bearer <token>`）**
 
 - `PUT /api/admin/profile`
 - `POST|PUT /api/admin/educations`、`DELETE /api/admin/educations/{id}`（经历/技能/作品同理）
-- `GET|DELETE /api/admin/messages[/{id}]`
+- `GET|POST /api/admin/share-links`、`PUT /api/admin/share-links/{id}/disable`（吊销）
+- `GET /api/admin/owners`（荣誉/作品集归属人候选）
 - `GET|POST|PUT|DELETE /api/admin/versions[/{id}]`、`PUT /api/admin/versions/{id}/default`
 - `PUT /api/admin/config`
 - `GET /api/admin/stats/overview|trend|sources|top-ips`
@@ -217,7 +226,7 @@ app:
 |------|------|
 | 运行模式 | 文件模式（`jdbc:h2:file:...`），数据持久化在磁盘，重启不丢失 |
 | 兼容模式 | `MODE=MySQL`，保留反引号、AUTO_INCREMENT、LIMIT/OFFSET 等 MySQL 语法 |
-| 自动初始化 | JDBC URL 带 `INIT=RUNSCRIPT FROM 'classpath:schema.sql'\;RUNSCRIPT FROM 'classpath:data.sql'`，仅在 `.mv.db` 文件不存在时执行一次 |
+| 自动初始化 | JDBC URL 带 `INIT=RUNSCRIPT FROM 'classpath:schema.sql'\;RUNSCRIPT FROM 'classpath:data.sql'`，每次连接都会执行；配合 `schema.sql` 开头的 `DROP TABLE IF EXISTS`，等价于每次重启重建库 |
 | 关键字规避 | `NON_KEYWORDS=USER` 让 `user` 表名不触发 H2 关键字冲突 |
 | 重置方式 | 停后端 → 删除 `data/` 目录 → 重启，H2 自动重建库 + 灌初始数据 |
 | 备份方式 | 停后端 → 复制 `data/resume.mv.db` 即可，单文件完整快照 |
@@ -228,5 +237,5 @@ app:
 1. 在本地执行 `mvn clean package -DskipTests` 重新打包（`pom.xml` 已替换为 H2 依赖）
 2. 上传新 jar 到服务器，替换旧 jar
 3. 删除服务器上的 MySQL 服务（H2 零外部依赖）
-4. 首次启动 H2 自动建表并执行 `data.sql` 灌入旧简历示例数据
+4. 每次启动 H2 都会重跑 `schema.sql`（先 DROP 再建表）和 `data.sql`，示例数据始终存在，运行期写入的数据会被覆盖
 5. 注意：旧 MySQL 中运行时产生的访问日志、AI 对话记录等数据**不会自动迁移**，H2 会从 `data.sql` 的初始数据开始

@@ -44,7 +44,7 @@ public class PortfolioService {
         return portfolioMapper.selectList(new LambdaQueryWrapper<Portfolio>()
                 .eq(Portfolio::getOwnerName, ownerName.trim())
                 .orderByAsc(Portfolio::getSort)
-                .orderByDesc(Portfolio::getId));
+                .orderByAsc(Portfolio::getId));
     }
 
     /** 归属人候选：作品集、荣誉证书等按人管理模块共用同一份候选列表 */

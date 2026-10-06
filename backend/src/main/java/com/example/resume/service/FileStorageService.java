@@ -67,7 +67,7 @@ public class FileStorageService {
         String datePart = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy/MM"));
         String baseName = UUID.randomUUID().toString().replace("-", "");
 
-        // 大图自动压缩到 500KB 以内（JPEG）；压缩后的文件统一用 .jpg
+        // 大图自动压缩到 150KB 以内（JPEG，见 ImageCompressUtil.MAX_BYTES）；压缩后的文件统一用 .jpg
         byte[] compressed = null;
         try {
             compressed = ImageCompressUtil.compressIfNeeded(file.getBytes(), extension);

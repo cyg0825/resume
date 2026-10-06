@@ -32,7 +32,8 @@ public class ShareLinkController {
     private final SimpleRateLimiter rateLimiter;
 
     @Operation(summary = "凭专属链接访问【公开】",
-            description = "校验链接有效性并计数，返回短期访客令牌；同一 IP 每分钟最多 20 次")
+            description = "校验链接有效性并计数，返回访客令牌（有效期取 app.jwt.share-expire，默认 60 天）；"
+                    + "同一 IP 每分钟最多 20 次")
     @GetMapping("/share/access")
     public Result<ShareAccessVO> access(@RequestParam String token,
                                         HttpServletRequest request) {

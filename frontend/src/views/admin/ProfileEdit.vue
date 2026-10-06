@@ -1,6 +1,6 @@
 <template>
   <div>
-    <VersionBar v-model="currentVersionId" :versions="versions" @change="loadProfile" />
+    <VersionBar v-model="currentVersionId" :versions="versions" />
 
     <el-card shadow="never" v-loading="loading">
       <el-form

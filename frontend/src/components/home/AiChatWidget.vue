@@ -15,7 +15,7 @@
 
         <div ref="bodyRef" class="chat-body">
           <div v-if="!messages.length" class="welcome">
-            <p>你好！我是这份简历的 AI 助手，可以向我询问她的<span>教育背景、实习经历、项目经验、技能特长、荣誉证书、联系方式</span>等，例如：</p>
+            <p>你好！我是这份简历的 AI 助手，可以向我询问<span>教育背景、实习经历、项目经验、技能特长、荣誉证书、联系方式</span>等，例如：</p>
             <div class="quick-list">
               <span v-for="q in quickQuestions" :key="q" class="quick-item" @click="askQuick(q)">
                 <el-icon class="q-icon"><ChatDotRound /></el-icon>{{ q }}
@@ -115,10 +115,10 @@ const bodyRef = ref()
 const messages = reactive([])
 
 const quickQuestions = [
-  '她掌握哪些测试技能？',
+  '掌握哪些技能？',
   '实习期间主要做什么工作？',
   '拿过哪些荣誉证书？',
-  '什么时候毕业？怎么联系她？'
+  '什么时候毕业？怎么联系？'
 ]
 
 // 会话 ID 持久化，用于服务端串联多轮对话

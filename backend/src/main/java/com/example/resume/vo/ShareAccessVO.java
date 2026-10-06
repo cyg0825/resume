@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 @Builder
 public class ShareAccessVO {
 
-    /** 访客访问令牌（短期 JWT，与后台管理员 JWT 区分） */
+    /** 访客访问令牌（默认 60 天，取 app.jwt.share-expire；与后台管理员 JWT 区分） */
     private String visitorToken;
 
     private Long linkId;

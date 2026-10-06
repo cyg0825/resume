@@ -18,7 +18,7 @@ public class AuthController {
 
     private final AuthService authService;
 
-    @Operation(summary = "管理员登录", description = "用户名密码校验成功后签发 JWT，默认账号 admin/admin123")
+    @Operation(summary = "管理员登录", description = "用户名密码校验成功后签发 JWT，账号由 app.admin.* 配置")
     @PostMapping("/login")
     public Result<LoginVO> login(@Valid @RequestBody LoginRequest request) {
         return Result.success(authService.login(request));

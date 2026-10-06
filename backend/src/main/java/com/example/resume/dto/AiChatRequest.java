@@ -12,7 +12,7 @@ public class AiChatRequest {
             example = "1758360000000-ab12cd34")
     private String sessionId;
 
-    @Schema(description = "访客提问内容", example = "他的技能栈有哪些？",
+    @Schema(description = "访客提问内容", example = "技能栈有哪些？",
             requiredMode = Schema.RequiredMode.REQUIRED)
     @NotBlank(message = "问题不能为空")
     private String question;

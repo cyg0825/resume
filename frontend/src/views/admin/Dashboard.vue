@@ -93,7 +93,8 @@ const overview = reactive({
   totalVisits: 0,
   uniqueVisitors: 0,
   todayVisits: 0,
-  todayUniqueVisitors: 0
+  todayUniqueVisitors: 0,
+  sessionWindowMinutes: 30
 })
 const topIps = ref([])
 
@@ -105,17 +106,21 @@ let sourceChart = null
 const cards = ref([
   {
     label: '累计访问量',
-    tip: '会话口径：同一访客 30 分钟内多次打开或刷新页面只计一次；关闭页面超过 30 分钟再次访问计为新的一次',
+    tip: '会话口径：同一访客在一个会话窗口内多次打开或刷新页面只计一次；超过窗口再次访问计为新的一次',
     value: 0,
     icon: 'View',
     color: '#2563eb'
   },
   { label: '独立访客(IP去重)', tip: '按访客 IP 全局去重后的累计人数', value: 0, icon: 'UserFilled', color: '#059669' },
-  { label: '今日访问', tip: '今日 0 点起的会话访问次数（30 分钟去重）', value: 0, icon: 'Sunny', color: '#f59e0b' },
+  { label: '今日访问', tip: '今日 0 点起的会话访问次数（按会话窗口去重）', value: 0, icon: 'Sunny', color: '#f59e0b' },
   { label: '今日独立访客', tip: '今日 0 点起按 IP 去重的访客数', value: 0, icon: 'Aim', color: '#8b5cf6' }
 ])
 
 function syncCards() {
+  // 窗口时长由后端返回，文案不写死配置值
+  const win = overview.sessionWindowMinutes
+  cards.value[0].tip = `会话口径：同一访客在 ${win} 分钟会话窗口内多次打开或刷新页面只计一次；超过窗口再次访问计为新的一次`
+  cards.value[2].tip = `今日 0 点起的会话访问次数（${win} 分钟去重）`
   cards.value[0].value = overview.totalVisits
   cards.value[1].value = overview.uniqueVisitors
   cards.value[2].value = overview.todayVisits

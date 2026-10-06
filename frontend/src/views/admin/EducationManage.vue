@@ -1,6 +1,6 @@
 <template>
   <div>
-    <VersionBar v-model="currentVersionId" :versions="versions" @change="loadList" />
+    <VersionBar v-model="currentVersionId" :versions="versions" />
 
     <el-card shadow="never">
       <template #header>

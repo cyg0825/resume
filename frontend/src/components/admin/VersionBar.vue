@@ -31,11 +31,11 @@ const props = defineProps({
   modelValue: { type: [Number, String], default: null },
   versions: { type: Array, default: () => [] }
 })
-const emit = defineEmits(['update:modelValue', 'change'])
+const emit = defineEmits(['update:modelValue'])
 
+// 页面侧用 watch(currentVersionId) 重新拉列表，这里不再额外 emit change
 function onChange(value) {
   emit('update:modelValue', value)
-  emit('change', value)
 }
 
 function openPreview() {

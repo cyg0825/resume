@@ -25,8 +25,8 @@ public class JwtUtil {
     @Value("${app.jwt.expire}")
     private long expire;
 
-    /** 访客专属链接访问令牌有效期（毫秒），默认 12 小时 */
-    @Value("${app.jwt.share-expire:43200000}")
+    /** 访客专属链接访问令牌有效期（毫秒），由 app.jwt.share-expire 配置，默认 60 天 */
+    @Value("${app.jwt.share-expire}")
     private long shareExpire;
 
     private SecretKey key;

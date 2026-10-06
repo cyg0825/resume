@@ -32,7 +32,7 @@ public class VersionController {
     }
 
     @Operation(summary = "创建版本【JWT】",
-            description = "sourceVersionId 不为空时，将源版本的个人信息/教育/经历/技能/作品完整克隆一份")
+            description = "sourceVersionId 不为空时克隆源版本的个人信息/教育/经历/技能；荣誉与作品集按归属人归档，不随版本复制")
     @PostMapping
     public Result<ResumeVersion> create(@Valid @RequestBody VersionCreateRequest request) {
         return Result.success(versionService.create(request));

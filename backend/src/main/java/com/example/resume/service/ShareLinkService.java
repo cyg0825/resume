@@ -18,7 +18,8 @@ import java.util.List;
 
 /**
  * 专属分享链接：生成、校验访问、吊销。
- * 访客凭 token 换取短期访客 JWT，之后凭 JWT 只读访问简历接口。
+ * 访客凭 token 换取访客 JWT，之后凭 JWT 只读访问简历接口。
+ * 链接自身的 expire_time 每次请求都会回查，早于 JWT 到期时以链接为准。
  */
 @Service
 @RequiredArgsConstructor
@@ -29,6 +30,15 @@ public class ShareLinkService {
     private final JwtUtil jwtUtil;
 
     private final SecureRandom secureRandom = new SecureRandom();
+
+    /**
+     * 失效原因码：前端据此选择拦截页文案，不依赖中文提示的措辞。
+     * 沿用 403 语义 + 子码，HTTP 状态仍由统一响应体的 code 表达。
+     */
+    public static final int CODE_LINK_INVALID = 4030;
+    public static final int CODE_LINK_EXPIRED = 4031;
+    public static final int CODE_LINK_VIEWS_FULL = 4032;
+    public static final int CODE_LINK_RACE_LOST = 4033;
 
     /**
      * 校验链接并计数，返回访客访问令牌
@@ -43,21 +53,21 @@ public class ShareLinkService {
 
         // 先给出精确的失效原因
         if (link == null || !Integer.valueOf(1).equals(link.getEnabled())) {
-            throw new BusinessException(403, "链接无效或已被吊销");
+            throw new BusinessException(CODE_LINK_INVALID, "链接无效或已被吊销");
         }
         if (link.getExpireTime() != null && link.getExpireTime().isBefore(LocalDateTime.now())) {
-            throw new BusinessException(403, "链接已过期");
+            throw new BusinessException(CODE_LINK_EXPIRED, "链接已过期");
         }
         if (link.getMaxViews() != null
                 && link.getViewCount() != null
                 && link.getViewCount() >= link.getMaxViews()) {
-            throw new BusinessException(403, "链接访问次数已达上限");
+            throw new BusinessException(CODE_LINK_VIEWS_FULL, "链接访问次数已达上限");
         }
 
         // 并发安全计数：条件不满足（并发耗尽/刚好过期/被吊销）时更新 0 行
         int rows = shareLinkMapper.incrViewIfValid(link.getId(), ip);
         if (rows == 0) {
-            throw new BusinessException(403, "链接已失效（过期、次数用尽或被吊销）");
+            throw new BusinessException(CODE_LINK_RACE_LOST, "链接已失效（过期、次数用尽或被吊销）");
         }
 
         String visitorToken = jwtUtil.generateShareToken(link.getId(), link.getVersionId());

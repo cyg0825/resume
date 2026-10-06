@@ -21,7 +21,11 @@ public final class IpUtils {
             if (StringUtils.hasText(ip) && !"unknown".equalsIgnoreCase(ip)) {
                 // X-Forwarded-For 可能是逗号分隔的多级代理，第一个为真实 IP
                 int comma = ip.indexOf(',');
-                return comma > 0 ? ip.substring(0, comma).trim() : ip.trim();
+                String candidate = (comma >= 0 ? ip.substring(0, comma) : ip).trim();
+                // 头值以逗号开头或整段为空时视为无效，继续试下一个头
+                if (StringUtils.hasText(candidate) && !"unknown".equalsIgnoreCase(candidate)) {
+                    return candidate;
+                }
             }
         }
         return request.getRemoteAddr();

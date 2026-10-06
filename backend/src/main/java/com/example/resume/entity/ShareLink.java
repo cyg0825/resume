@@ -25,7 +25,7 @@ public class ShareLink {
     /** 随机访问串（64 位 hex） */
     private String token;
 
-    /** 备注：发给谁，如"字节 HR" */
+    /** 备注：发给谁，如"某公司 HR" */
     private String remark;
 
     /** 绑定的简历版本 ID，NULL=默认版本 */

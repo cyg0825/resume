@@ -124,20 +124,14 @@ watch(() => route.path, () => {
   mobileMenuOpen.value = false
 })
 
-// 与路由 meta 对应，顺序即后台菜单顺序
-const menuItems = [
-  { path: '/admin/dashboard', title: '数据概览', icon: 'DataLine' },
-  { path: '/admin/profile', title: '基本信息', icon: 'User' },
-  { path: '/admin/education', title: '教育经历', icon: 'School' },
-  { path: '/admin/experience', title: '工作/项目', icon: 'Briefcase' },
-  { path: '/admin/skill', title: '技能管理', icon: 'Histogram' },
-  { path: '/admin/honor', title: '荣誉证书', icon: 'Trophy' },
-  { path: '/admin/portfolio', title: '作品集', icon: 'Picture' },
-  { path: '/admin/ai-history', title: 'AI 问答记录', icon: 'ChatLineRound' },
-  { path: '/admin/version', title: '简历版本', icon: 'Files' },
-  { path: '/admin/share', title: '专属链接', icon: 'Link' },
-  { path: '/admin/theme', title: '主题与站点', icon: 'Brush' }
-]
+// 菜单直接由路由 children 生成，标题/图标只维护路由 meta 一份
+const menuItems = router.getRoutes()
+  .find((r) => r.path === '/admin')
+  .children.map((child) => ({
+    path: `/admin/${child.path}`,
+    title: child.meta.title,
+    icon: child.meta.icon
+  }))
 
 async function handleCommand(command) {
   if (command === 'logout') {

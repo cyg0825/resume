@@ -7,6 +7,7 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 /**
  * 全局异常处理，保证所有错误也返回统一响应格式
@@ -37,6 +38,13 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(NoResourceFoundException.class)
     public Result<Void> handleNoResource(NoResourceFoundException e) {
         return Result.error(404, "接口或资源不存在");
+    }
+
+    /** 上传体积超过 multipart 限制：给出可读提示，不透出原始异常信息 */
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public Result<Void> handleMaxUploadSize(MaxUploadSizeExceededException e) {
+        log.warn("上传体积超出 multipart 限制: {}", e.getMessage());
+        return Result.error(413, "文件体积超出上限，请压缩后重新上传");
     }
 
     @ExceptionHandler(Exception.class)

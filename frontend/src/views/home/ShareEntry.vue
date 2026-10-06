@@ -22,10 +22,12 @@ const router = useRouter()
 const loading = ref(true)
 const errorMsg = ref('')
 
-function reasonFromMsg(msg = '') {
-  if (msg.includes('过期')) return 'expired'
-  if (msg.includes('次数')) return 'views'
-  if (msg.includes('频繁')) return 'limit'
+// 失效原因取自后端返回的业务码（ShareLinkService.CODE_LINK_*），
+// 不匹配中文提示文案，后端改文案不会影响这里
+function reasonFromCode(code) {
+  if (code === 4031) return 'expired'
+  if (code === 4032) return 'views'
+  if (code === 429) return 'limit'
   return 'invalid'
 }
 
@@ -38,7 +40,7 @@ onMounted(async () => {
     loading.value = false
     errorMsg.value = e.msg || '链接无效或已过期'
     setTimeout(() => {
-      router.replace({ path: '/blocked', query: { reason: reasonFromMsg(e.msg) } })
+      router.replace({ path: '/blocked', query: { reason: reasonFromCode(e.code) } })
     }, 900)
   }
 })

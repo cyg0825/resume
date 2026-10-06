@@ -19,7 +19,7 @@ import org.springframework.stereotype.Component;
 
 /**
  * 启动时基础数据兜底初始化：
- * - 默认管理员账号（user 表为空时创建，用户名/密码来自配置，默认 admin/admin123）
+ * - 默认管理员账号（user 表为空时创建，用户名/密码来自 app.admin.* 配置项）
  * - 默认简历版本（id=1）及其空白个人信息
  * - 默认站点配置（id=1）
  * 注意：示例简历内容由 SQL 脚本导入，这里只保证系统可登录、可运行。

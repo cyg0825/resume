@@ -68,7 +68,7 @@
     <el-dialog v-model="dialogVisible" title="生成专属链接" width="500px">
       <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
         <el-form-item label="发给谁" prop="remark">
-          <el-input v-model="form.remark" maxlength="100" placeholder="如：字节 HR（仅自己可见，用于区分链接）" />
+          <el-input v-model="form.remark" maxlength="100" placeholder="如：某公司 HR（仅后台可见，用于区分链接）" />
         </el-form-item>
         <el-form-item label="简历版本">
           <el-select v-model="form.versionId" clearable placeholder="不绑定=默认版本" style="width: 100%">
@@ -89,6 +89,9 @@
             format="YYYY-MM-DD HH:mm"
             style="width: 100%"
           />
+          <div class="field-tip">
+            这里控制的是链接本身的有效期；访客换到的登录态另有固定时长（后端默认 60 天），到期后重新点链接即可。
+          </div>
         </el-form-item>
         <el-form-item label="最大访问次数">
           <el-input-number

@@ -98,7 +98,7 @@ public class VersionService {
         return first.getId();
     }
 
-    /** 版本内容完整度评分：各栏目记录数之和 */
+    /** 版本内容完整度评分：教育 + 经历 + 技能三表记录数之和，作品集/荣誉按姓名归档不计入 */
     private long contentScore(ResumeVersion version) {
         Long id = version.getId();
         return safeCount(educationMapper.selectCount(
@@ -127,7 +127,8 @@ public class VersionService {
         ResumeVersion version = new ResumeVersion();
         version.setVersionName(request.getVersionName());
         version.setDescription(request.getDescription());
-        // 非默认版本存 NULL（数据库唯一索引 uk_version_default 保证最多一个 1）
+        // 非默认版本存 NULL（表级 UNIQUE(is_default) 保证最多一个 1，NULL 不参与唯一性判定；
+        // 索引名由 H2 自动生成，DDL 里没有显式命名）
         version.setIsDefault(null);
         versionMapper.insert(version);
 

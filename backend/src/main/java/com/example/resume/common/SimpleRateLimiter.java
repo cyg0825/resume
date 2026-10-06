@@ -8,7 +8,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * 基于内存的固定窗口限流器：同一 IP 60 秒内最多访问指定次数。
+ * 基于内存的滑动窗口限流器：同一 IP 60 秒内最多访问指定次数。
  * 用于专属链接访问接口，防止暴力枚举 token。
  */
 @Component
