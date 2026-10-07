@@ -9,8 +9,7 @@
       <p class="hint">
         <el-icon><InfoFilled /></el-icon>
         <span>
-          本简历为<strong>私密简历，不对外公开</strong>。请通过站长发给你的<strong>专属链接</strong>打开，
-          无需注册，也无需输入密码。
+          本简历为<strong>私密简历，不对外公开</strong>，请通过站长发给你的<strong>专属链接</strong>打开。
         </span>
       </p>
     </div>

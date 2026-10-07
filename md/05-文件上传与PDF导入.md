@@ -113,7 +113,7 @@ public record ImportResult(Long versionId, String versionName, Map<String, Integ
 
 入口不在侧边栏菜单里，而是 `views/admin/VersionManage.vue:7-12` 顶部的「导入 PDF 简历」按钮，弹出面板见 `:79-143`。约束：`accept=".pdf"`、`limit 1`、体积上限 `MAX_PDF_SIZE = 10 * 1024 * 1024`（`:88-103`、`:187`），和后端 multipart 限制对齐。超出 limit 时先 `clearFiles` 再 `handleStart`，实现"选新文件即替换"（`:227-235`）。
 
-进度条在上传阶段封顶 95%，留 5% 给大模型解析（`:245-251`）——上传本身是本地到服务器的秒级动作，真正久等的是模型，不封顶的话用户看到的是"卡在 100% 不动"。请求单独设 `timeout: 180000` 并开启 `onUploadProgress`（`api/index.js:109-117`），这个数值必须大于后端 `callLlm` 的 120 秒，否则前端先超时、后端还在跑。
+进度条在上传阶段封顶 95%，留 5% 给大模型解析（`:245-251`）——上传本身是本地到服务器的秒级动作，真正久等的是模型，不封顶的话用户看到的是"卡在 100% 不动"。请求单独设 `timeout: 180000` 并开启 `onUploadProgress`（`api/index.js:110-118`），这个数值必须大于后端 `callLlm` 的 120 秒，否则前端先超时、后端还在跑。
 
 导入成功后展示各栏目条数（`VersionManage.vue:112-131`、`:189-195`）、刷新版本列表，并可一键预览新版本（`:254`、`:260-264`）。此时访客看到的仍是原默认版本，新内容要等管理员点「设为默认」才对外的生效，这个顺序是设计意图而不是遗漏。
 
@@ -123,4 +123,4 @@ public record ImportResult(Long versionId, String versionName, Map<String, Integ
 - **压缩按阶梯试，最差也要交付**：最长边四档 × JPEG 质量五档逐级降（`util/ImageCompressUtil.java:28-34`），原图已达标直接返回 null 让调用方原样保存（`:64-67`），解码失败同样不阻断上传（`:55-62`），全部超标则交回尝试过的最小结果（`:85-87,97-98`）。上传链路上任何"优化型"处理都该遵守这条：优化失败不能变成用户可见的失败。顺带一个格式兼容点——转 JPEG 前要把 alpha 铺白底（`:122-137`），否则透明 PNG 会转出一张黑底图。
 - **URL 加工放在序列化阶段，不在业务代码里**：自定义注解 `common/AssetUrl` 标在实体的图片字段上，序列化时统一拼指纹参数（`config/AssetUrlSerializer.java:23-24`），写库和读取两侧都没有手工拼参数的分支。配套约束是入库前必须剥掉参数（`ProfileService.java:30`、`HonorService.java:53`、`PortfolioService.java:63`），否则脏数据逐次叠加。序列化器由 Jackson 而非 Spring 实例化，取 Bean 只能走静态上下文（`config/SpringContextHolder.java:8,17,22`）——这套绕法适用于任何"字段级输出加工"，代价是多一个全局 static。
 - **抽版式文档的文本要按坐标排序**：`PDFTextStripper` 的 `setSortByPosition(true)`（`service/ResumeImportService.java:221-224`）是双栏简历能不能被后续模型读懂的分界线，默认顺序跟 PDF 内部对象顺序走，两栏内容会交错成一串。同理，抽出来是空文本就当场拒绝并提示走 OCR（`:86-88`），不要把手里的空白文本交给模型。
-- **给模型的结构化输出一条超时链，缺项不猜**：前端 180 秒大于抽取请求的 120 秒（`api/index.js:114` 与 `ResumeImportService.java:274`），解析只做两步清洗（剥 markdown 围栏、截首 `{` 到末 `}`，`:303-314`），关键字段缺失直接抛错并由 `@Transactional` 回滚整个版本（`:80-81,317-319`）。补默认值看起来更友好，但猜出来的经历会被当成真实内容读进去，比导入失败更难发现。
+- **给模型的结构化输出一条超时链，缺项不猜**：前端 180 秒大于抽取请求的 120 秒（`api/index.js:115` 与 `ResumeImportService.java:274`），解析只做两步清洗（剥 markdown 围栏、截首 `{` 到末 `}`，`:303-314`），关键字段缺失直接抛错并由 `@Transactional` 回滚整个版本（`:80-81,317-319`）。补默认值看起来更友好，但猜出来的经历会被当成真实内容读进去，比导入失败更难发现。

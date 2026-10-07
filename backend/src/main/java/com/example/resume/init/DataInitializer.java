@@ -14,15 +14,25 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.support.EncodedResource;
+import org.springframework.jdbc.datasource.init.ScriptException;
+import org.springframework.jdbc.datasource.init.ScriptUtils;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
+import javax.sql.DataSource;
+import java.nio.charset.StandardCharsets;
+import java.sql.Connection;
+import java.sql.SQLException;
+
 /**
  * 启动时基础数据兜底初始化：
+ * - 示例简历内容（data.sql）：仅当 resume_version 为空时导入一次
  * - 默认管理员账号（user 表为空时创建，用户名/密码来自 app.admin.* 配置项）
  * - 默认简历版本（id=1）及其空白个人信息
  * - 默认站点配置（id=1）
- * 注意：示例简历内容由 SQL 脚本导入，这里只保证系统可登录、可运行。
+ * 每一步都先看表里有没有数据，因此反复重启不会覆盖运行期改过的内容。
  */
 @Slf4j
 @Component
@@ -34,6 +44,7 @@ public class DataInitializer implements CommandLineRunner {
     private final ProfileMapper profileMapper;
     private final SiteConfigMapper siteConfigMapper;
     private final PasswordEncoder passwordEncoder;
+    private final DataSource dataSource;
 
     @Value("${app.admin.username}")
     private String adminUsername;
@@ -43,9 +54,35 @@ public class DataInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
+        seedDemoDataIfEmpty();
         initAdmin();
         initDefaultVersion();
         initSiteConfig();
+    }
+
+    /**
+     * 示例简历内容只在空库灌一次：有版本记录说明这套库在用，重启不再动它。
+     * 范围边界一：data.sql 不入版本库，也不放在 resources 下（打进去就等于把真实简历带进镜像），
+     *              因此正常构建出的 jar 里没有这份脚本，导入直接跳过，由后面的兜底逻辑建空白版本。
+     * 范围边界二：如果手工把 resume_version 全删光，下次重启会把这份内容再灌一遍。
+     */
+    private void seedDemoDataIfEmpty() {
+        Long versionCount = versionMapper.selectCount(null);
+        if (versionCount != null && versionCount > 0) {
+            return;
+        }
+        ClassPathResource script = new ClassPathResource("data.sql");
+        if (!script.exists()) {
+            log.info("未找到 data.sql（该文件不入库），跳过简历内容导入，按空白版本兜底");
+            return;
+        }
+        try (Connection connection = dataSource.getConnection()) {
+            ScriptUtils.executeSqlScript(connection,
+                    new EncodedResource(script, StandardCharsets.UTF_8));
+            log.info("简历内容脚本已导入（触发条件：resume_version 为空）");
+        } catch (SQLException | ScriptException e) {
+            log.error("简历内容脚本导入失败，改由兜底逻辑创建空白版本: {}", e.getMessage());
+        }
     }
 
     private void initAdmin() {

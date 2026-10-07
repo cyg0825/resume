@@ -4,6 +4,7 @@ import com.example.resume.common.BusinessException;
 import com.example.resume.common.Result;
 import com.example.resume.common.SimpleRateLimiter;
 import com.example.resume.dto.ShareLinkCreateRequest;
+import com.example.resume.dto.ShareTokenUpdateRequest;
 import com.example.resume.entity.ShareLink;
 import com.example.resume.service.ShareLinkService;
 import com.example.resume.util.IpUtils;
@@ -20,7 +21,7 @@ import java.util.List;
 /**
  * 专属分享链接：
  * - GET  /api/share/access            访客凭 token 进入（公开，IP 限流，防爆破）
- * - 管理接口 /api/admin/share-links   生成 / 列表 / 吊销（需管理员 JWT）
+ * - 管理接口 /api/admin/share-links   生成 / 列表 / 吊销 / 修复 Token（需管理员 JWT）
  */
 @Tag(name = "15-专属分享链接", description = "凭链接 token 访问简历；后台生成、查看访问统计、吊销")
 @RestController
@@ -61,5 +62,14 @@ public class ShareLinkController {
     public Result<Void> disable(@PathVariable Long id) {
         shareLinkService.disable(id);
         return Result.success();
+    }
+
+    @Operation(summary = "修复/更换 Token【JWT】",
+            description = "把指定链接的 Token 改成给定值，用于链接被误删后要沿用原链接、或换库迁移后地址不变；"
+                    + "取值必须是 64 位十六进制且未被其他链接占用，备注/版本绑定/访问次数不受影响")
+    @PutMapping("/admin/share-links/{id}/token")
+    public Result<ShareLink> updateToken(@PathVariable Long id,
+                                         @Valid @RequestBody ShareTokenUpdateRequest request) {
+        return Result.success(shareLinkService.updateToken(id, request.getToken()));
     }
 }

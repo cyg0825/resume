@@ -1,17 +1,9 @@
-DROP TABLE IF EXISTS ai_chat_history CASCADE;
-DROP TABLE IF EXISTS education CASCADE;
-DROP TABLE IF EXISTS experience CASCADE;
-DROP TABLE IF EXISTS honor CASCADE;
-DROP TABLE IF EXISTS portfolio CASCADE;
-DROP TABLE IF EXISTS profile CASCADE;
-DROP TABLE IF EXISTS resume_version CASCADE;
-DROP TABLE IF EXISTS share_link CASCADE;
-DROP TABLE IF EXISTS site_config CASCADE;
-DROP TABLE IF EXISTS skill CASCADE;
-DROP TABLE IF EXISTS user CASCADE;
-DROP TABLE IF EXISTS visit_log CASCADE;
+-- 建表脚本：通过 JDBC URL 的 INIT=RUNSCRIPT 在每次连接时执行，因此全部语句必须幂等。
+-- 不写 DROP TABLE——一旦写下，每次重启都会先删表再建，运行期数据全部回到 data.sql 的初始状态。
+-- 表已存在时 CREATE TABLE IF NOT EXISTS 什么都不做，数据原样保留；索引同理。
+-- 示例数据不在这里导入，见 init/DataInitializer：仅当 resume_version 为空时执行一次 data.sql。
 
-CREATE TABLE ai_chat_history (
+CREATE TABLE IF NOT EXISTS ai_chat_history (
   id bigint NOT NULL AUTO_INCREMENT,
   session_id varchar(64) DEFAULT NULL,
   question text,
@@ -21,7 +13,7 @@ CREATE TABLE ai_chat_history (
   PRIMARY KEY (id)
 );
 
-CREATE TABLE education (
+CREATE TABLE IF NOT EXISTS education (
   id bigint NOT NULL AUTO_INCREMENT,
   version_id bigint NOT NULL DEFAULT 1,
   school varchar(100) DEFAULT NULL,
@@ -34,7 +26,7 @@ CREATE TABLE education (
   PRIMARY KEY (id)
 );
 
-CREATE TABLE experience (
+CREATE TABLE IF NOT EXISTS experience (
   id bigint NOT NULL AUTO_INCREMENT,
   version_id bigint NOT NULL DEFAULT 1,
   type tinyint DEFAULT 1,
@@ -48,7 +40,7 @@ CREATE TABLE experience (
   PRIMARY KEY (id)
 );
 
-CREATE TABLE honor (
+CREATE TABLE IF NOT EXISTS honor (
   id bigint NOT NULL AUTO_INCREMENT,
   owner_name varchar(50) NOT NULL,
   title varchar(200) NOT NULL,
@@ -61,7 +53,7 @@ CREATE TABLE honor (
   PRIMARY KEY (id)
 );
 
-CREATE TABLE portfolio (
+CREATE TABLE IF NOT EXISTS portfolio (
   id bigint NOT NULL AUTO_INCREMENT,
   owner_name varchar(50) NOT NULL,
   title varchar(100) DEFAULT NULL,
@@ -72,7 +64,7 @@ CREATE TABLE portfolio (
   PRIMARY KEY (id)
 );
 
-CREATE TABLE profile (
+CREATE TABLE IF NOT EXISTS profile (
   id bigint NOT NULL AUTO_INCREMENT,
   version_id bigint NOT NULL DEFAULT 1,
   name varchar(50) DEFAULT NULL,
@@ -91,7 +83,7 @@ CREATE TABLE profile (
   PRIMARY KEY (id)
 );
 
-CREATE TABLE resume_version (
+CREATE TABLE IF NOT EXISTS resume_version (
   id bigint NOT NULL AUTO_INCREMENT,
   version_name varchar(100) NOT NULL,
   description varchar(500) DEFAULT NULL,
@@ -102,7 +94,7 @@ CREATE TABLE resume_version (
   UNIQUE (is_default)
 );
 
-CREATE TABLE share_link (
+CREATE TABLE IF NOT EXISTS share_link (
   id bigint NOT NULL AUTO_INCREMENT,
   token varchar(64) NOT NULL,
   remark varchar(100) DEFAULT NULL,
@@ -118,7 +110,7 @@ CREATE TABLE share_link (
   UNIQUE (token)
 );
 
-CREATE TABLE site_config (
+CREATE TABLE IF NOT EXISTS site_config (
   id bigint NOT NULL,
   site_title varchar(100) DEFAULT '个人简历',
   default_theme varchar(50) DEFAULT 'default',
@@ -127,7 +119,7 @@ CREATE TABLE site_config (
   PRIMARY KEY (id)
 );
 
-CREATE TABLE skill (
+CREATE TABLE IF NOT EXISTS skill (
   id bigint NOT NULL AUTO_INCREMENT,
   version_id bigint NOT NULL DEFAULT 1,
   category varchar(50) DEFAULT NULL,
@@ -137,7 +129,7 @@ CREATE TABLE skill (
   PRIMARY KEY (id)
 );
 
-CREATE TABLE user (
+CREATE TABLE IF NOT EXISTS user (
   id bigint NOT NULL AUTO_INCREMENT,
   username varchar(50) NOT NULL,
   password varchar(100) NOT NULL,
@@ -148,7 +140,7 @@ CREATE TABLE user (
   UNIQUE (username)
 );
 
-CREATE TABLE visit_log (
+CREATE TABLE IF NOT EXISTS visit_log (
   id bigint NOT NULL AUTO_INCREMENT,
   ip varchar(64) DEFAULT NULL,
   user_agent varchar(500) DEFAULT NULL,
@@ -159,14 +151,14 @@ CREATE TABLE visit_log (
   PRIMARY KEY (id)
 );
 
-CREATE INDEX idx_ai_session ON ai_chat_history(session_id);
-CREATE INDEX idx_ai_create_time ON ai_chat_history(create_time);
-CREATE INDEX idx_education_version ON education(version_id);
-CREATE INDEX idx_experience_version_type ON experience(version_id, type);
-CREATE INDEX idx_honor_owner ON honor(owner_name);
-CREATE INDEX idx_portfolio_owner ON portfolio(owner_name);
-CREATE INDEX idx_profile_version ON profile(version_id);
-CREATE INDEX idx_share_enabled ON share_link(enabled);
-CREATE INDEX idx_skill_version ON skill(version_id);
-CREATE INDEX idx_visit_time ON visit_log(visit_time);
-CREATE INDEX idx_visit_ip ON visit_log(ip);
+CREATE INDEX IF NOT EXISTS idx_ai_session ON ai_chat_history(session_id);
+CREATE INDEX IF NOT EXISTS idx_ai_create_time ON ai_chat_history(create_time);
+CREATE INDEX IF NOT EXISTS idx_education_version ON education(version_id);
+CREATE INDEX IF NOT EXISTS idx_experience_version_type ON experience(version_id, type);
+CREATE INDEX IF NOT EXISTS idx_honor_owner ON honor(owner_name);
+CREATE INDEX IF NOT EXISTS idx_portfolio_owner ON portfolio(owner_name);
+CREATE INDEX IF NOT EXISTS idx_profile_version ON profile(version_id);
+CREATE INDEX IF NOT EXISTS idx_share_enabled ON share_link(enabled);
+CREATE INDEX IF NOT EXISTS idx_skill_version ON skill(version_id);
+CREATE INDEX IF NOT EXISTS idx_visit_time ON visit_log(visit_time);
+CREATE INDEX IF NOT EXISTS idx_visit_ip ON visit_log(ip);

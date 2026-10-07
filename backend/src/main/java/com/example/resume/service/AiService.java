@@ -24,7 +24,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * AI 智能问答服务：
  * 1. 以指定（或默认）简历版本的全部内容构建知识库；
- * 2. 携带同会话最近几轮历史，调用 OpenAI 兼容的大模型接口；
+ * 2. 携带同会话、同版本最近几轮历史，调用 OpenAI 兼容的大模型接口；
  * 3. 未配置 api-key 或调用失败时，降级为基于简历内容的本地关键词问答；
  * 4. 每轮问答写入 ai_chat_history，供后台管理。
  */
@@ -107,11 +107,17 @@ public class AiService {
 
         String answer;
         String source;
+        // 上下文回捞键带版本号：同一浏览器会话换版本时不复用上一版本的多轮记录。
+        // session_id 列宽 64，先把 sessionId 截短再拼后缀，避免后缀被截掉后不同版本重新并流
+        String versionSuffix = "#" + versionId;
+        String historyKey = sessionId.length() + versionSuffix.length() > 64
+                ? sessionId.substring(0, 64 - versionSuffix.length()) + versionSuffix
+                : sessionId + versionSuffix;
         if (apiKey != null && !apiKey.isBlank()) {
             try {
                 // 先用向量嵌入做语义检索，只把最相关的知识块交给大模型
                 String context = retrieveContext(request.getQuestion(), versionId, knowledgeBase);
-                answer = callLlm(request.getQuestion(), context, sessionId);
+                answer = callLlm(request.getQuestion(), context, historyKey);
                 source = "llm";
             } catch (Exception e) {
                 log.warn("大模型调用失败，降级本地问答: {}", e.getMessage());
@@ -124,7 +130,7 @@ public class AiService {
         }
 
         AiChatHistory history = new AiChatHistory();
-        history.setSessionId(sessionId);
+        history.setSessionId(historyKey);
         history.setQuestion(request.getQuestion());
         history.setAnswer(answer);
         history.setSource(source);
@@ -476,7 +482,7 @@ public class AiService {
     /**
      * 调用 OpenAI 兼容 Chat Completions 接口
      */
-    private String callLlm(String question, String knowledgeBase, String sessionId) throws Exception {
+    private String callLlm(String question, String knowledgeBase, String historyKey) throws Exception {
         List<Map<String, String>> messages = new ArrayList<>();
 
         java.time.LocalDate today = java.time.LocalDate.now();
@@ -495,10 +501,10 @@ public class AiService {
                 + "简历知识库：\n" + knowledgeBase);
         messages.add(system);
 
-        // 追加同会话历史，实现多轮对话
+        // 追加同会话、同版本的历史，实现多轮对话
         List<AiChatHistory> histories = chatHistoryMapper.selectList(
                 new LambdaQueryWrapper<AiChatHistory>()
-                        .eq(AiChatHistory::getSessionId, sessionId)
+                        .eq(AiChatHistory::getSessionId, historyKey)
                         .orderByDesc(AiChatHistory::getId)
                         .last("LIMIT " + HISTORY_LIMIT));
         Collections.reverse(histories);

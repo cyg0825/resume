@@ -48,9 +48,10 @@ public class VersionService {
                 // 链接未绑定版本（跟随默认）：强制使用当前默认版本，忽略请求参数
                 return defaultVersionId();
             }
-            // 链接绑定了版本：只能看该版本；版本已被删除时给出明确错误
+            // 链接绑定的版本已被删除。文案会原样出现在访客页面，不写「版本」字样，
+            // 免得访客从报错里读出站长还准备了其他简历
             if (versionMapper.selectById(bound) == null) {
-                throw new BusinessException(404, "链接绑定的简历版本已不可用，请联系站长更新链接");
+                throw new BusinessException(404, "该链接暂不可用，请联系站长更新");
             }
             return bound;
         }

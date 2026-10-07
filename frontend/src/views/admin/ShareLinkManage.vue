@@ -51,9 +51,10 @@
             <el-tag :type="statusOf(row).type" size="small">{{ statusOf(row).text }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="170" fixed="right">
+        <el-table-column label="操作" width="230" fixed="right">
           <template #default="{ row }">
             <el-button link type="primary" @click="copyLink(row)">复制链接</el-button>
+            <el-button link type="warning" @click="fixToken(row)">修复 Token</el-button>
             <el-button
               link
               type="danger"
@@ -116,7 +117,7 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { getShareLinks, createShareLink, disableShareLink, getVersions } from '@/api'
+import { getShareLinks, createShareLink, disableShareLink, updateShareLinkToken, getVersions } from '@/api'
 
 const loading = ref(false)
 const saving = ref(false)
@@ -189,6 +190,26 @@ async function save() {
   } finally {
     saving.value = false
   }
+}
+
+async function fixToken(row) {
+  const { value } = await ElMessageBox.prompt(
+    '粘贴要沿用的那串 64 位 Token：链接记录删掉后重建、或换库迁移之后，对方手上的旧地址仍然可以打开。'
+      + '这里只改 Token，备注、绑定版本和访问次数都不变；填了已被其他链接占用的 Token 会被拒绝。',
+    '修复 Token',
+    {
+      inputPlaceholder: '填入 64 位十六进制 Token',
+      inputPattern: /^[0-9a-f]{64}$/i,
+      inputErrorMessage: 'Token 需为 64 位十六进制字符串',
+      confirmButtonText: '保存',
+      cancelButtonText: '取消'
+    }
+  )
+  const token = value.trim().toLowerCase()
+  await updateShareLinkToken(row.id, { token })
+  ElMessage.success('Token 已更新')
+  await loadAll()
+  copyText(buildUrl(token))
 }
 
 async function remove(row) {

@@ -20,7 +20,7 @@ services:
       KNIFE4J_PRODUCTION: ${KNIFE4J_PRODUCTION:-true}
       UPLOAD_DIR: /app/uploads
     ports:
-      - "${BACKEND_PORT:-8080}:8080"
+      - "${BACKEND_PORT:-8081}:8081"
     volumes:
       - uploads-data:/app/uploads
       - h2-data:/app/data

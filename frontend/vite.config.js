@@ -15,12 +15,12 @@ export default defineConfig({
     proxy: {
       // 后台接口代理
       '/api': {
-        target: 'http://localhost:8080',
+        target: 'http://localhost:8081',
         changeOrigin: true
       },
       // 上传文件静态资源代理
       '/uploads': {
-        target: 'http://localhost:8080',
+        target: 'http://localhost:8081',
         changeOrigin: true
       }
     }

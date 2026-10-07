@@ -19,7 +19,7 @@
 ## 一、功能总览
 
 ### 基础功能
-- 前台单页简历：首页（头像/姓名/职位/slogan/社交链接）、关于我、教育经历、工作/项目经历（时间线）、技能熟练度进度条、作品集卡片、联系方式与留言
+- 前台单页简历：首页（头像/姓名/职位/slogan/社交链接）、个人评价、教育经历、工作/项目经历（时间线）、技能熟练度进度条、荣誉证书、作品集卡片、联系方式与 AI 问答
 - 简历 PDF 导出（html2canvas-pro + jsPDF，A4 自动分页）
 - 后台 JWT 登录鉴权，基本信息、教育、经历、技能、作品集的增删改查
 - 图片上传（头像、作品封面），本地存储并按日期分目录
@@ -56,10 +56,10 @@ Resume
 │   │   ├── service/             # 业务层（含 AI、统计、版本等）
 │   │   └── util/                # IP 工具
 │   ├── src/main/resources/
-│   │   ├── schema.sql           # H2 建表脚本（每次启动执行，开头含 DROP TABLE）
-│   │   ├── data.sql             # 初始数据（简历示例、管理员账号等）
+│   │   ├── schema.sql           # H2 建表脚本（INIT 每次连接执行，语句全部幂等）
 │   │   ├── application.yml      # 公共配置
 │   │   └── application-prod.yml  # 生产覆盖配置
+│   │   （示例简历脚本 data.sql 不在仓库里，见「四、快速开始」和「九、数据库说明」）
 │   └── Dockerfile
 ├── frontend/                    # Vue 3 前端
 │   ├── src/
@@ -86,9 +86,9 @@ Resume
 docker compose up -d --build
 ```
 
-- **H2 内嵌数据库自动建表 + 灌初始数据**（零外部依赖，无需手动准备数据库）；注意每次启动都会重跑脚本并重建表，见「九、数据库说明」
+- **H2 内嵌数据库自动建表 + 空库灌初始数据**（零外部依赖，无需手动准备数据库）；建表脚本幂等，重启不覆盖运行期数据，见「九、数据库说明」
 - 前端地址：http://localhost （WEB_PORT 可改）
-- 后端地址：http://localhost:8080
+- 后端地址：http://localhost:8081
 - 初始管理员：账号口令由 `ADMIN_USERNAME`/`ADMIN_PASSWORD` 指定，未设置时取 `application.yml` 里的本地默认值；首次登录后请立即改密
 
 可用环境变量覆盖默认配置（见 `docker-compose.yml`）：
@@ -106,11 +106,11 @@ cd backend
 mvn spring-boot:run
 ```
 
-后端运行在 http://localhost:8080。首次启动自动：
-- H2 以文件模式在 `./data/resume.mv.db` 落盘；JDBC URL 的 `INIT=RUNSCRIPT` 每次启动都会重跑 `schema.sql`/`data.sql`，而 `schema.sql` 开头是 `DROP TABLE IF EXISTS`，因此运行期数据（管理员、版本、专属链接、访问记录）在重启时会被重置
-- 执行 `schema.sql` 建表、`data.sql` 灌入初始简历数据
-- 创建管理员账号（`ADMIN_USERNAME`/`ADMIN_PASSWORD`，未设置时取本地默认值）
-- 兜底创建默认简历版本与站点配置
+后端运行在 http://localhost:8081。首次启动自动：
+- H2 以文件模式在 `./data/resume.mv.db` 落盘；JDBC URL 的 `INIT=RUNSCRIPT` 每次连接都执行 `schema.sql`，脚本内 12 条建表、11 条索引全部 `IF NOT EXISTS` 且不含 `DROP TABLE`，因此重复执行不会改动已有数据
+- `resume_version` 为空时才导入示例简历数据；已有数据则跳过。这份脚本不入版本库、也不放 `src/main/resources`（放在那里会被打进 jar），所以首次启动得到的是空白库，只建表和一条默认版本；需要灌示例内容时，把根目录的 `resume_seed.sql` 复制成 `src/main/resources/data.sql` 再启动
+- 创建管理员账号（`ADMIN_USERNAME`/`ADMIN_PASSWORD`，未设置时取本地默认值），`user` 表非空则跳过
+- 兜底创建默认简历版本与站点配置，两张表各自判空
 
 > 需要清空数据重来？停掉后端 → 删除 `backend/data/` 目录 → 再启动。
 
@@ -122,7 +122,7 @@ npm install
 npm run dev
 ```
 
-访问 http://localhost:5173 （Vite 已配置 `/api`、`/uploads` 代理到 8080 端口）。
+访问 http://localhost:5173 （Vite 已配置 `/api`、`/uploads` 代理到 8081 端口）。
 
 ## 五、功能使用说明
 
@@ -156,9 +156,9 @@ app:
 
 | 入口 | 地址 |
 |------|------|
-| Knife4j 文档 UI（推荐） | http://localhost:8080/doc.html |
-| 原生 Swagger UI | http://localhost:8080/swagger-ui.html |
-| OpenAPI JSON | http://localhost:8080/v3/api-docs |
+| Knife4j 文档 UI（推荐） | http://localhost:8081/doc.html |
+| 原生 Swagger UI | http://localhost:8081/swagger-ui.html |
+| OpenAPI JSON | http://localhost:8081/v3/api-docs |
 | Docker/Nginx 部署后 | http://localhost/doc.html （Nginx 已代理文档路径） |
 
 **调试需要 JWT 的后台接口**：
@@ -201,8 +201,9 @@ app:
 **管理接口（/api/admin/**，均需 `Authorization: Bearer <token>`）**
 
 - `PUT /api/admin/profile`
+- `PUT /api/admin/account/password`（修改登录密码：校验原密码，新密码 8~64 位；改完已签发 JWT 仍有效）
 - `POST|PUT /api/admin/educations`、`DELETE /api/admin/educations/{id}`（经历/技能/作品同理）
-- `GET|POST /api/admin/share-links`、`PUT /api/admin/share-links/{id}/disable`（吊销）
+- `GET|POST /api/admin/share-links`、`PUT /api/admin/share-links/{id}/disable`（吊销）、`PUT /api/admin/share-links/{id}/token`（修复/更换 Token，用于误删后沿用旧地址）
 - `GET /api/admin/owners`（荣誉/作品集归属人候选）
 - `GET|POST|PUT|DELETE /api/admin/versions[/{id}]`、`PUT /api/admin/versions/{id}/default`
 - `PUT /api/admin/config`
@@ -212,7 +213,7 @@ app:
 
 ## 八、生产部署注意事项
 
-1. 务必通过环境变量覆盖 `JWT_SECRET` 与 `ADMIN_PASSWORD`。
+1. 务必通过环境变量覆盖 `JWT_SECRET` 与 `ADMIN_PASSWORD`，或首次登录后用后台右上角头像下拉里的「修改密码」改掉默认口令（`ADMIN_PASSWORD` 只在 `user` 表为空时写入一次，改过之后重启不会刷回默认值）。
 2. Nginx 配置见 `frontend/nginx.conf`，已包含 SPA 回退、`/api`、`/uploads`、Knife4j 文档路径代理、gzip 与静态缓存。
 3. 生产环境设置 `KNIFE4J_PRODUCTION=true` 关闭 `/doc.html` 接口文档，避免接口结构外泄。
 4. 上传文件默认存于后端 `./uploads`（容器内 `/app/uploads`，已用 volume 持久化）。
@@ -226,9 +227,9 @@ app:
 |------|------|
 | 运行模式 | 文件模式（`jdbc:h2:file:...`），数据持久化在磁盘，重启不丢失 |
 | 兼容模式 | `MODE=MySQL`，保留反引号、AUTO_INCREMENT、LIMIT/OFFSET 等 MySQL 语法 |
-| 自动初始化 | JDBC URL 带 `INIT=RUNSCRIPT FROM 'classpath:schema.sql'\;RUNSCRIPT FROM 'classpath:data.sql'`，每次连接都会执行；配合 `schema.sql` 开头的 `DROP TABLE IF EXISTS`，等价于每次重启重建库 |
+| 自动初始化 | JDBC URL 带 `INIT=RUNSCRIPT FROM 'classpath:schema.sql'`，每次连接执行建表脚本；语句全部幂等，表已存在时无操作。示例数据不在这里导入，由 `DataInitializer` 在 `resume_version` 为空时执行一次 `data.sql`（该脚本不入版本库、也不在 resources 里，缺少该文件时跳过导入） |
 | 关键字规避 | `NON_KEYWORDS=USER` 让 `user` 表名不触发 H2 关键字冲突 |
-| 重置方式 | 停后端 → 删除 `data/` 目录 → 重启，H2 自动重建库 + 灌初始数据 |
+| 重置方式 | 停后端 → 删除 `data/` 目录 → 重启，H2 自动重建库；得到一个空库（建表 + 一条默认版本）；要灌示例内容，先把根目录 `resume_seed.sql` 复制成 `src/main/resources/data.sql` |
 | 备份方式 | 停后端 → 复制 `data/resume.mv.db` 即可，单文件完整快照 |
 
 ### 迁移自 MySQL
@@ -237,5 +238,5 @@ app:
 1. 在本地执行 `mvn clean package -DskipTests` 重新打包（`pom.xml` 已替换为 H2 依赖）
 2. 上传新 jar 到服务器，替换旧 jar
 3. 删除服务器上的 MySQL 服务（H2 零外部依赖）
-4. 每次启动 H2 都会重跑 `schema.sql`（先 DROP 再建表）和 `data.sql`，示例数据始终存在，运行期写入的数据会被覆盖
-5. 注意：旧 MySQL 中运行时产生的访问日志、AI 对话记录等数据**不会自动迁移**，H2 会从 `data.sql` 的初始数据开始
+4. `schema.sql` 每次连接都会重跑，但语句全部幂等，已建好的表和数据不受影响；示例数据迁移靠根目录的 `resume_dump.sql` / `resume_seed.sql`，两者都不入版本库
+5. 注意：旧 MySQL 中运行时产生的访问日志、AI 对话记录等数据**不会自动迁移**，需要按表导出 INSERT 再导入；仓库里没有示例脚本，空库首次启动只会建表和一条默认版本

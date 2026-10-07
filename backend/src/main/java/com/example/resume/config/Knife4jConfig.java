@@ -12,7 +12,7 @@ import org.springframework.context.annotation.Configuration;
 
 /**
  * Knife4j / springdoc-openapi 接口文档配置。
- * 文档地址：http://localhost:8080/doc.html
+ * 文档地址：http://localhost:8081/doc.html
  * 同时按“前台公开接口 / 后台管理接口(JWT)”分为两个分组。
  */
 @Configuration

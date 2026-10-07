@@ -3,6 +3,8 @@ import request from '@/utils/request'
 /* ===================== 认证 ===================== */
 export const login = (data) => request.post('/auth/login', data)
 export const logout = () => request.post('/auth/logout')
+// 管理员改密：校验原密码，新密码 8~64 位；已签发 token 不失效
+export const changePassword = (data) => request.put('/admin/account/password', data)
 
 /* ===================== 前台公开接口 ===================== */
 export const getProfile = (versionId) =>
@@ -75,6 +77,7 @@ export const accessShareLink = (token) =>
 export const getShareLinks = () => request.get('/admin/share-links')
 export const createShareLink = (data) => request.post('/admin/share-links', data)
 export const disableShareLink = (id) => request.put(`/admin/share-links/${id}/disable`)
+export const updateShareLinkToken = (id, data) => request.put(`/admin/share-links/${id}/token`, data)
 
 /* ===================== 后台：站点配置（主题默认值等） ===================== */
 export const updateSiteConfig = (data) => request.put('/admin/config', data)

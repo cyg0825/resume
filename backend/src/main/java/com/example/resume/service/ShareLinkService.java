@@ -131,6 +131,35 @@ public class ShareLinkService {
     }
 
     /**
+     * 修复 / 更换链接的 Token。
+     * 场景：链接记录被误删后用原 Token 重建、数据库迁移后要继续沿用已发出去的链接。
+     * 只动 Token 一列，备注、版本绑定、访问次数、吊销状态都保持原值。
+     */
+    public ShareLink updateToken(Long id, String token) {
+        ShareLink link = shareLinkMapper.selectById(id);
+        if (link == null) {
+            throw new BusinessException(404, "链接不存在");
+        }
+        // 生成侧固定是小写十六进制，访问校验按字符串精确匹配，因此统一转小写再落库
+        String normalized = token.trim().toLowerCase();
+        if (normalized.equals(link.getToken())) {
+            return link;
+        }
+        Long occupied = shareLinkMapper.selectCount(
+                new LambdaQueryWrapper<ShareLink>()
+                        .eq(ShareLink::getToken, normalized)
+                        .ne(ShareLink::getId, id));
+        if (occupied != null && occupied > 0) {
+            throw new BusinessException(409, "该 Token 已被其他链接占用");
+        }
+        ShareLink update = new ShareLink();
+        update.setId(id);
+        update.setToken(normalized);
+        shareLinkMapper.updateById(update);
+        return shareLinkMapper.selectById(id);
+    }
+
+    /**
      * 256 位安全随机数 → 64 位十六进制串，不可枚举
      */
     private String generateToken() {

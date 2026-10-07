@@ -16,5 +16,5 @@ RUN mkdir -p /app/uploads
 
 COPY --from=builder /build/target/resume-backend.jar /app/app.jar
 
-EXPOSE 8080
+EXPOSE 8081
 ENTRYPOINT ["java", "-jar", "/app/app.jar"]

@@ -17,6 +17,7 @@ pnpm-debug.log*
 /resume-backend.jar
 /uploads.tar.gz
 /resume_data.sql
+/resume_dump.sql
 
 # ---- 环境变量（防止提交真实 API Key / 密码） ----
 .env
@@ -25,6 +26,12 @@ pnpm-debug.log*
 
 # ---- H2 本地数据库 ----
 backend/data/
+
+# ---- 个人真实内容（不入库：真实姓名/联系方式/口令密文/有效链接 token） ----
+# 简历内容以 backend/data/resume.mv.db 为准；种子脚本挪到仓库根目录，不再进 resources（进了 jar 就等于把真实简历打进镜像）
+/resume_seed.sql
+# 本地想灌空库时把它复制回 resources，这份规则防止复制后误提交
+backend/src/main/resources/data.sql
 
 # ---- 上传文件与本地配置 ----
 backend/uploads/
