@@ -37,7 +37,7 @@
 
 - 前端：Vue 3 + Vite 5 + Element Plus + Pinia + Vue Router 4 + Axios + ECharts + html2canvas-pro + jsPDF
 - 后端：Spring Boot 3.2 + Spring Security + JJWT 0.12 + MyBatis-Plus 3.5 + H2 Database + Lombok
-- 数据库：H2 2.2（文件模式，MySQL 兼容语法，数据持久化在磁盘）
+- 数据库：H2 2.2 文件模式，数据持久化在磁盘，无独立数据库进程
 - 部署：Docker Compose（后端 JRE 镜像 + 前端 Nginx 镜像，零外部数据库依赖）
 
 ## 三、目录结构
@@ -221,22 +221,13 @@ app:
 
 ## 九、数据库说明（H2）
 
-本项目使用 **H2 内嵌数据库**，MySQL 兼容语法模式，具备以下特性：
+本项目使用 **H2 内嵌数据库**（jar 依赖，无独立进程），具备以下特性：
 
 | 特性 | 说明 |
 |------|------|
 | 运行模式 | 文件模式（`jdbc:h2:file:...`），数据持久化在磁盘，重启不丢失 |
-| 兼容模式 | `MODE=MySQL`，保留反引号、AUTO_INCREMENT、LIMIT/OFFSET 等 MySQL 语法 |
+| 兼容模式 | JDBC URL 带 `MODE=MySQL`，建表脚本因此能直接写反引号、`AUTO_INCREMENT`、`LIMIT/OFFSET` |
 | 自动初始化 | JDBC URL 带 `INIT=RUNSCRIPT FROM 'classpath:schema.sql'`，每次连接执行建表脚本；语句全部幂等，表已存在时无操作。示例数据不在这里导入，由 `DataInitializer` 在 `resume_version` 为空时执行一次 `data.sql`（该脚本不入版本库、也不在 resources 里，缺少该文件时跳过导入） |
 | 关键字规避 | `NON_KEYWORDS=USER` 让 `user` 表名不触发 H2 关键字冲突 |
 | 重置方式 | 停后端 → 删除 `data/` 目录 → 重启，H2 自动重建库；得到一个空库（建表 + 一条默认版本）；要灌示例内容，先把根目录 `resume_seed.sql` 复制成 `src/main/resources/data.sql` |
 | 备份方式 | 停后端 → 复制 `data/resume.mv.db` 即可，单文件完整快照 |
-
-### 迁移自 MySQL
-
-如果之前使用 MySQL，迁移步骤为：
-1. 在本地执行 `mvn clean package -DskipTests` 重新打包（`pom.xml` 已替换为 H2 依赖）
-2. 上传新 jar 到服务器，替换旧 jar
-3. 删除服务器上的 MySQL 服务（H2 零外部依赖）
-4. `schema.sql` 每次连接都会重跑，但语句全部幂等，已建好的表和数据不受影响；示例数据迁移靠根目录的 `resume_dump.sql` / `resume_seed.sql`，两者都不入版本库
-5. 注意：旧 MySQL 中运行时产生的访问日志、AI 对话记录等数据**不会自动迁移**，需要按表导出 INSERT 再导入；仓库里没有示例脚本，空库首次启动只会建表和一条默认版本
